@@ -36,7 +36,7 @@ app.set('view engine', 'jade');
 
 const cors = require('cors');
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: 'https://jewellery-deployuser.vercel.app',
   credentials: true,
   optionSuccessStatus: 200
 }

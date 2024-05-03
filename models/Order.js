@@ -3,9 +3,14 @@ const { Schema, model } = mongoose;
 
 const orderDetailSchema = new Schema({
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+    productName: { type: String, required: true },
+    imageUrl: { type: String },
     quantity: { type: Number, require: true, min: 0 },
     price: { type: Number, required: true, min: 0, default: 0 },
     discount: { type: Number, min: 0, max: 75, default: 0 },
+    sizeId: { type: Schema.Types.ObjectId, ref: 'Size' },
+    size: { type: String },
+    stock: { type: Number },
 });
 
 // Virtual with Populate
@@ -74,7 +79,7 @@ const orderSchema = new Schema({
         default: 'CASH',
         validate: {
             validator: (value) => {
-                if (['CASH', 'CREDIT CARD'].includes(value.toUpperCase())) {
+                if (['CASH', 'CREDIT CARD', 'VNPAY'].includes(value.toUpperCase())) {
                     return true;
                 }
                 return false;
@@ -89,7 +94,7 @@ const orderSchema = new Schema({
         default: 'WAITING',
         validate: {
             validator: (value) => {
-                if (['WAITING', 'COMPLETED', 'CANCELED'].includes(value)) {
+                if (['WAITING', 'COMPLETED', 'CANCELED', 'APPROVED'].includes(value)) {
                     return true;
                 }
                 return false;
@@ -98,7 +103,7 @@ const orderSchema = new Schema({
         },
     },
 
-    shippingAddressId: { type: Schema.Types.ObjectId, ref: 'ShippingAddress', required: false },
+    shippingAddress: { type: String, required: true },
     customerId: { type: Schema.Types.ObjectId, ref: 'Customer', required: false },
     employeeId: { type: Schema.Types.ObjectId, ref: 'Employee' },
 
@@ -113,13 +118,6 @@ const orderSchema = new Schema({
 orderSchema.virtual('customer', {
     ref: 'Customer',
     localField: 'customerId',
-    foreignField: '_id',
-    justOne: true,
-});
-
-orderSchema.virtual('shippingAddress', {
-    ref: 'ShippingAddress',
-    localField: 'shippingAddressId',
     foreignField: '_id',
     justOne: true,
 });

@@ -42,8 +42,7 @@ const customerSchema = new Schema(
     address: { type: String, required: true },
     gender: { type: String, required: true },
     birthday: { type: Date },
-    status: { type: Boolean },
-    // avatarUrl: { type: Schema.Types.ObjectId, ref: 'Media' },
+    status: { type: Boolean, default: false },
   },
   {
     versionKey: false,
@@ -51,25 +50,23 @@ const customerSchema = new Schema(
   }
 );
 
-// customerSchema.virtual('customerAvatar', {
-//     ref: 'Media',
-//     localField: 'avatarUrl',
-//     foreignField: '_id',
-//     justOne: true,
-// });
-
 customerSchema.virtual("fullName").get(function () {
   return this.firstName + " " + this.lastName;
 });
 
 customerSchema.pre("save", async function (next) {
+  // Kiểm tra nếu mật khẩu không được chỉnh sửa
+  if (!this.isModified("password")) {
+    return next();
+  }
+
   try {
     // generate salt key
     const salt = await bcrypt.genSalt(10); // 10 ký tự
     // generate password = sale key + hash key
-    const hassPass = await bcrypt.hash(this.password, salt);
+    const hashedPassword = await bcrypt.hash(this.password, salt);
     // override password
-    this.password = hassPass;
+    this.password = hashedPassword;
     next();
   } catch (err) {
     next(err);

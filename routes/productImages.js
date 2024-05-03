@@ -136,6 +136,7 @@ const router = express.Router();
 // MULTER UPLOAD
 const multer = require("multer");
 const { updateDocument, findDocument } = require("../helpers/MongoDbHelper");
+const { ObjectId } = require("mongodb");
 
 const UPLOAD_DIRECTORY = "./public/uploads";
 
@@ -160,9 +161,17 @@ var upload = multer({
   }),
 }).single("file");
 
+function isValidObjectId(id) {
+  return ObjectId.isValid(id);
+}
+
 // http://127.0.0.1:9000/upload/categories/63293fea50d2f78624e0c6f3/image
 router.post("/:collectionName/:id/image", async (req, res, next) => {
   const { collectionName, id } = req.params;
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ message: "Invalid ObjectId format" });
+  }
 
   const found = await findDocument(id, collectionName);
   if (!found) {

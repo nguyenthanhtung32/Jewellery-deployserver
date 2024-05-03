@@ -357,6 +357,12 @@ function deleteDocuments(query, collectionName) {
 // FIND: Tìm kiếm (id)
 function findDocument(id, collectionName) {
   return new Promise((resolve, reject) => {
+    // Kiểm tra id có hợp lệ không
+    if (!ObjectId.isValid(id)) {
+      reject(new Error('Invalid ObjectId'));
+      return;
+    }
+
     MongoClient.connect(CONNECTION_STRING, {
       useNewUrlParser: true,
       useUnifiedTopology: true,

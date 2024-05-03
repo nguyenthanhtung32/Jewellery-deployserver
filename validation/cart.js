@@ -49,18 +49,4 @@ module.exports = {
             quantity: yup.number().required().min(0),
         }),
     }),
-
-    updateSchema: yup.object({
-        params: yup.object({
-            customerId: yup.string().test('validationID', 'ID sai định dạng', (value) => {
-                return ObjectId.isValid(value);
-            }),
-            productId: yup.string().test('validationProductID', 'ID sai định dạng', (value) => {
-                return ObjectId.isValid(value);
-            })
-        }),
-        body: yup.object({
-            quantity: yup.number().required().min(0)
-        })
-    })
 };

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
-const mongooseLeanVirtuals = require('mongoose-lean-virtuals');
 const bcrypt = require('bcryptjs');
 
 const employeeSchema = new Schema({
@@ -42,7 +41,8 @@ const employeeSchema = new Schema({
     birthday: { type: Date },
     gender: { type: String, required: true },
     role: { type: String, required: true },
-    avatar: { type: String, required: true },
+    avatar: { type: String },
+    isLocked: { type: Boolean, default: false },
 },
     {
         versionKey: false,
@@ -51,18 +51,23 @@ const employeeSchema = new Schema({
 );
 
 employeeSchema.pre('save', async function (next) {
+    // Kiểm tra nếu mật khẩu không được chỉnh sửa
+    if (!this.isModified("password")) {
+        return next();
+    }
+
     try {
-
-        const salt = await bcrypt.genSalt(10);
-
-        const hashPass = await bcrypt.hash(this.password, salt);
-
-        this.password = hashPass;
+        // generate salt key
+        const salt = await bcrypt.genSalt(10); // 10 ký tự
+        // generate password = sale key + hash key
+        const hashedPassword = await bcrypt.hash(this.password, salt);
+        // override password
+        this.password = hashedPassword;
         next();
     } catch (err) {
         next(err);
     }
-})
+});
 
 employeeSchema.methods.isValidPass = async function (pass) {
     try {
@@ -76,9 +81,5 @@ employeeSchema.virtual('fullName').get(function () {
     return this.firstName + ' ' + this.lastName;
 });
 
-employeeSchema.set('toObject', { virtuals: true });
-
-employeeSchema.set('toJSON', { virtuals: true });
-employeeSchema.plugin(mongooseLeanVirtuals);
 const Employee = model('Employee', employeeSchema);
 module.exports = Employee;

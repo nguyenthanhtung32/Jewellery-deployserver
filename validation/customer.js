@@ -17,8 +17,7 @@ const validateSchema = (schema) => async (req, res, next) => {
 const loginSchema = yup.object({
     body: yup.object({
         email: yup.string().email().required(),
-        password: yup.string().min(8).max(31).required()
-        ,
+        password: yup.string().min(8).max(31).required(),
     }),
     params: yup.object({}),
 });
@@ -39,7 +38,6 @@ const categorySchema = yup.object().shape({
 module.exports = {
     validateSchema,
     loginSchema,
-
     getCustomersSchema,
     categorySchema
 };

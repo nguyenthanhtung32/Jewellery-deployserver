@@ -4,6 +4,8 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const passport = require('passport');
+const cors = require('cors');
+
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
@@ -19,14 +21,14 @@ passport.use(passportConfigCustomer);
 passport.use(passportConfigLocal);
 
 const categoriesRouter = require('./routes/categories');
-const productImagesRouter = require('./routes/productImages');
 const customerAvatarRouter = require('./routes/customerAvatar');
-const reviewsRouter = require('./routes/reviews');
-const sizesRouter = require('./routes/sizes');
-const productsRouter = require('./routes/products');
 const customersRouter = require('./routes/customers');
 const employeesRouter = require('./routes/employees');
-const cartsRouter = require('./routes/carts');
+const ordersRouter = require('./routes/orders');
+const productImagesRouter = require('./routes/productImages');
+const productsRouter = require('./routes/products');
+const reviewsRouter = require('./routes/reviews');
+const sizesRouter = require('./routes/sizes');
 
 const app = express();
 
@@ -34,22 +36,23 @@ const app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-const cors = require('cors');
-const corsOptions = {
-  origin: 'https://jewellery-deployuser.vercel.app',
-  credentials: true,
-  optionSuccessStatus: 200
-}
-app.use(cors(corsOptions));
-
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+
+// Add CORS here
+app.use(
+  cors({
+    origin: '*',
+  }),
+);
 
 // MONGOOSE
 mongoose.set('strictQuery', false);
@@ -68,13 +71,13 @@ mongoose.connection.on('error', (err) => {
 
 app.use('/categories', categoriesRouter);
 app.use('/customerAvatar', customerAvatarRouter);
-app.use('/productImages', productImagesRouter);
-app.use('/reviews', reviewsRouter);
-app.use('/sizes', sizesRouter);
-app.use('/products', productsRouter);
 app.use('/customers', customersRouter);
 app.use('/employees', employeesRouter);
-app.use('/carts', cartsRouter);
+app.use('/orders', ordersRouter);
+app.use('/productImages', productImagesRouter);
+app.use('/products', productsRouter);
+app.use('/reviews', reviewsRouter);
+app.use('/sizes', sizesRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

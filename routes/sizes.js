@@ -63,9 +63,10 @@ router.post('/', async function (req, res, next) {
             sizes: yup.array().of(
                 yup.object().shape({
                     size: yup.string().required(),
+                    stock: yup.number().required(),
                 })
             ).required(),
-            stock: yup.number.required(),
+            productName: yup.string().required(),
         }),
     });
 

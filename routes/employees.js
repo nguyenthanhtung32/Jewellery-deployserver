@@ -1,6 +1,6 @@
 const passport = require('passport');
 const express = require('express');
-
+const bcrypt = require("bcryptjs");
 const { CONNECTION_STRING } = require('../constants/dbSettings');
 const { default: mongoose } = require('mongoose');
 const { Employee } = require('../models');
@@ -20,13 +20,18 @@ const router = express.Router();
 router.post(
     '/login',
     validateSchema(loginSchema),
-    //passport.authenticate('local', { session: false }),
     async (req, res, next) => {
         try {
-            const { email } = req.body;
+            const { email, password } = req.body;
             const employee = await Employee.findOne({ email });
 
             if (!employee) return res.status(404).send({ message: 'Not found' });
+
+            const isValidPassword = await bcrypt.compare(password, employee.password);
+
+            if (!isValidPassword) {
+                return res.status(401).json({ message: "Incorrect password" });
+            }
 
             const { _id, email: empEmail, firstName, lastName } = employee;
 
@@ -72,15 +77,6 @@ router.route('/profile').get(passport.authenticate('jwt', { session: false }), a
         res.sendStatus(500);
     }
 },);
-
-router.get('/count', async (req, res, next) => {
-    try {
-        const employeeCount = await Employee.countDocuments();
-        res.status(200).json({ count: employeeCount });
-    } catch (err) {
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
 
 // GET
 
@@ -137,12 +133,67 @@ router.post('/', async (req, res, next) => {
         res.sendStatus(500);
     }
 });
+// POST để khóa tài khoản nhân viên
+router.post('/:id/lock', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Tìm nhân viên theo ID
+        const employees = await Employee.findById(id);
+
+        if (!employees) {
+            return res.status(404).json({ message: 'Không tìm thấy nhân viên' });
+        }
+
+        // Đặt trạng thái isLocked của nhân viên thành true
+        employees.isLocked = true;
+
+        // Lưu thay đổi
+        await employees.save();
+
+        res.status(200).json({ message: 'Tài khoản đã bị khóa thành công' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Đã xảy ra lỗi khi khóa tài khoản' });
+    }
+});
+
+// POST để mở khóa tài khoản nhân viên
+router.post('/:id/unlock', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Tìm nhân viên theo ID
+        const employees = await Employee.findById(id);
+
+        if (!employees) {
+            return res.status(404).json({ message: 'Không tìm thấy nhân viên' });
+        }
+
+        // Đặt trạng thái isLocked của nhân viên thành false
+        employees.isLocked = false;
+
+        // Lưu thay đổi
+        await employees.save();
+
+        res.status(200).json({ message: 'Tài khoản đã được mở khóa thành công' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Đã xảy ra lỗi khi mở khóa tài khoản' });
+    }
+});
 
 // PATCH/:id
-router.patch('/:id', function (req, res, next) {
+router.patch('/:id', async function (req, res, next) {
     try {
         const { id } = req.params;
         const data = req.body;
+
+        if (data.password) {
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(data.password, salt);
+            data.password = hashedPassword;
+        }
 
         Employee.findByIdAndUpdate(id, data, {
             new: true,

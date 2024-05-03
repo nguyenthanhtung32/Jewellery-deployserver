@@ -2,17 +2,16 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 const mongooseLeanVirtuals = require("mongoose-lean-virtuals");
 
-const productSchema = Schema(
+const productSchema = new Schema(
     {
         productName: { type: String, required: true },
         code: { type: String, required: true },
         price: { type: Number, min: 0, default: 0, required: true },
         discount: { type: Number, min: 0, max: 100, default: 0, required: true },
-        stockQuantity: { type: Number, min: 0, default: 0 },
-        // imageId: { type: Schema.Types.ObjectId, ref: 'Media' },
+        stock: { type: Number, min: 0, default: 0 },
         categoryId: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
         reviewId: { type: Schema.Types.ObjectId, ref: 'Review' },
-        sizeId: { type: Schema.Types.ObjectId, ref: 'Review' },
+        sizeId: { type: Schema.Types.ObjectId, ref: 'Size' },
     },
     {
         versionKey: false,
@@ -20,23 +19,9 @@ const productSchema = Schema(
     }
 );
 
-// productSchema.virtual('productImages', {
-//     ref: 'Media',
-//     localField: 'imageId',
-//     foreignField: '_id',
-//     justOne: true,
-// });
-
 productSchema.virtual('category', {
     ref: 'Category',
     localField: 'categoryId',
-    foreignField: '_id',
-    justOne: true,
-});
-
-productSchema.virtual('review', {
-    ref: 'Review',
-    localField: 'reviewId',
     foreignField: '_id',
     justOne: true,
 });

@@ -3,7 +3,7 @@ const yup = require('yup');
 const ObjectId = require("mongodb").ObjectId;
 const { CONNECTION_STRING } = require('../constants/dbSettings');
 const { default: mongoose } = require('mongoose');
-const { Reviews } = require('../models');
+const { Review } = require('../models');
 
 // MONGOOSE
 mongoose.set('strictQuery', false);
@@ -14,7 +14,9 @@ const router = express.Router();
 //GEt ALL
 router.get('/', function (req, res, next) {
   try {
-    Reviews.find()
+    Review.find()
+      .populate('customer')
+      .populate('product')
       .then((result) => {
         res.send(result);
       })
@@ -26,49 +28,75 @@ router.get('/', function (req, res, next) {
   }
 });
 
-//GET id
-router.get('/:id', async function (req, res, next) {
-  // Validate
-  const validationSchema = yup.object().shape({
-    params: yup.object({
-      id: yup.string().test('Validate ObjectID', '${path} is not valid ObjectID', (value) => {
-        return ObjectId.isValid(value);
-      }),
-    }),
-  });
-
-  validationSchema
-    .validate({ params: req.params }, { abortEarly: false })
-    .then(async () => {
-      const id = req.params.id;
-
-      let found = await Reviews.findById(id);
-
-      if (found) {
-        return res.send({ ok: true, result: found });
-      }
-
-      return res.send({ ok: false, message: 'Object not found' });
-    })
-    .catch((err) => {
-      return res.status(400).json({ type: err.name, errors: err.errors, message: err.message, provider: 'yup' });
-    });
+router.get('/:productId', function (req, res, next) {
+  const productId = req.params.productId;
+  try {
+    Review.find({ productId: productId })
+      .populate('customer')
+      .populate('product')
+      .then((result) => {
+        res.send(result);
+      })
+      .catch((err) => {
+        res.status(400).send({ message: err.message });
+      });
+  } catch (err) {
+    res.sendStatus(500);
+  }
 });
+
+
+
+//GET id
+// router.get('/:id', async function (req, res, next) {
+//   // Validate
+//   const validationSchema = yup.object().shape({
+//     params: yup.object({
+//       id: yup.string().test('Validate ObjectID', '${path} is not valid ObjectID', (value) => {
+//         return ObjectId.isValid(value);
+//       }),
+//     }),
+//   });
+
+//   validationSchema
+//     .validate({ params: req.params }, { abortEarly: false })
+//     .then(async () => {
+//       const id = req.params.id;
+
+//       let found = await Review.findById(id)
+//         .populate('customer')
+//         .populate('product');
+//       if (found) {
+//         return res.send({ ok: true, result: found });
+//       }
+
+//       return res.send({ ok: false, message: 'Object not found' });
+//     })
+//     .catch((err) => {
+//       return res.status(400).json({ type: err.name, errors: err.errors, message: err.message, provider: 'yup' });
+//     });
+// });
 
 //POST
 router.post('/', async function (req, res, next) {
   // Validate
   const validationSchema = yup.object({
     body: yup.object({
-        customerId: yup
+      customerId: yup
         .string()
         .required()
         .test("Validate ObjectID", "${path} is not valid ObjectID", (value) => {
           return ObjectId.isValid(value);
         }),
-        ratingRate: yup.number().min(0).max(5).required(),
-        comment: yup.string().required(),
-        reviewDate: yup.date(),
+      productId: yup
+        .string()
+        .required()
+        .test("Validate ObjectID", "${path} is not valid ObjectID", (value) => {
+          return ObjectId.isValid(value);
+        }),
+      ratingRate: yup.number().min(0).max(5),
+      comment: yup.string(),
+      reviewDate: yup.date(),
     }),
   });
 
@@ -77,7 +105,7 @@ router.post('/', async function (req, res, next) {
     .then(async () => {
       try {
         const data = req.body;
-        const newItem = new Reviews(data);
+        const newItem = new Review(data);
         let result = await newItem.save();
 
         return res.send({ ok: true, message: 'Created', result });
@@ -106,7 +134,7 @@ router.delete('/:id', function (req, res, next) {
       try {
         const id = req.params.id;
 
-        let found = await Reviews.findByIdAndDelete(id);
+        let found = await Review.findByIdAndDelete(id);
 
         if (found) {
           return res.send({ ok: true, result: found });
@@ -126,7 +154,7 @@ router.patch("/:id", async function (req, res) {
   try {
     const id = req.params.id;
     const data = req.body;
-    await Reviews.findByIdAndUpdate(id, data);
+    await Review.findByIdAndUpdate(id, data);
     res.send({ ok: true, message: "Updated" });
   } catch (error) {
     res.status(500).send({ ok: false, error });

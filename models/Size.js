@@ -4,16 +4,17 @@ const { Schema, model } = mongoose;
 const sizeDetailSchema = new Schema(
     {
         size: { type: String },
-        stock: {type: Number},
+        stock: { type: Number },
     },
     {
-        _id: true 
+        _id: true
     }
 );
 
 const sizeSchema = new Schema(
     {
         sizes: [sizeDetailSchema],
+        productName: { type: String, required: true },
     },
     {
         versionKey: false,
